@@ -1,71 +1,66 @@
 import React, { useState, useEffect, useRef } from 'react'
-//import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-
-//import '@tensorflow/tfjs-node-gpu';
 import * as faceapi from 'face-api.js';
+
 
 const Camera =  (props) => {
 
+    const container = {
+        position: "relative"
+    };
+    const canvasRelative = {
+        position: "absolute",
+        left: 0,
+        top: 0
+    }
+    
+    
     const [mediaStream, setMediaStream] = useState(null);
-    const [seconds] = useState(0);
+    const [loaded, setLoaded] = useState(null);
 
     const videoRef = useRef();
     const canvasRef = useRef();
 
     useEffect(() => {
      
-    
-        // function setStartInterval(stream,model){
-        //       setInterval(() => {
-        //         setSeconds(seconds => seconds + 1);
-        //         handleCapture()
-        //       }, 3000);
-        // }
-
         let m = 0;
         async function getInfoFromMedia(model) {
             
             m++
-           
             const imageDetection = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-            console.log("imageDetection",  imageDetection);
-            console.log(videoRef.current);
-            console.dir(videoRef.current);
-
-            // // resize the detected boxes in case your displayed image has a different size then the original
             const detectionsForSize = faceapi.resizeResults(imageDetection, { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight })
-
-            console.log("detectionsForSize", detectionsForSize);
-            // const canvas = document.getElementById('overlay')
-            // canvas.width = videoRef.current.videoWidth
-            // canvas.height = videoRef.current.videoHeight
-            faceapi.draw.drawDetections(videoRef.current, detectionsForSize)
-
-
             const predictions = await model.detect(videoRef.current);
             handleCapture(predictions)
-            requestAnimationFrame(() => {
-                console.log(m);
-                 
-                getInfoFromMedia(model);
-              });
 
-            //console.log(predictions);
+            faceapi.draw.drawDetections(canvasRef.current, detectionsForSize)
+
+            setTimeout(function(){ 
+                console.log(m);
+                getInfoFromMedia(model); 
+            }, 500);
+
+            // requestAnimationFrame(() => {
+            //     console.log(m);
+            //     getInfoFromMedia(model);
+            //   });
+
         }
         
      
         let stream = null;
-        let constraints = { video: { width: 300, height: 300 }}
-        //let interval = '';
+        let constraints = { video: { width: 640, height: 480 }}
 
         async function enableStream() {
             try {
-              await faceapi.loadTinyFaceDetectorModel('/models')
-              stream = await navigator.mediaDevices.getUserMedia(constraints);
-              setMediaStream(stream);
-              const model = await cocoSsd.load();
-              await getInfoFromMedia(model)
+                setLoaded("Loading FaceApiModels")
+                await faceapi.loadTinyFaceDetectorModel('/models')
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                // await timeout(3000);
+                setMediaStream(stream);
+                setLoaded("Loading cocoSsd Models... it takes time")
+                const model = await cocoSsd.load();
+                await getInfoFromMedia(model)
+                setLoaded(null)
 
             } catch(err) {
               
@@ -82,17 +77,17 @@ const Camera =  (props) => {
             }
           }
 
-          //return () => clearInterval(interval);
-
-    },[mediaStream])
+    },[mediaStream, setLoaded])
 
 
-    
+    function timeout(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     function handleCapture(predictions) {
         const context = canvasRef.current.getContext("2d");
         context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-        context.drawImage(videoRef.current, 0, 0);
+        //context.drawImage(videoRef.current, 0, 0);
         const font = "24px helvetica";
         context.font = font;
         context.textBaseline = "top";
@@ -128,8 +123,7 @@ const Camera =  (props) => {
    
     if (mediaStream && videoRef.current && !videoRef.current.srcObject) {
         videoRef.current.srcObject = mediaStream;
-        console.log("VIDEORED",videoRef.current.srcObject);
-      }
+    }
 
     
     
@@ -137,24 +131,28 @@ const Camera =  (props) => {
         videoRef.current.play();
     }
 
+
+
     return (
         <div>
-            <h1>CAMERA</h1>
-            Count: {seconds}
+            <h1>Object and Face Recognition</h1>
+            {
+              loaded ? (
+                <div>{loaded}</div>
+              ) : (
+                ""
+              )
+            }
            
-            <div>
-                 <video ref={videoRef} onCanPlay={handleCanPlay} />
+            
+            <div style={container} >
+                <video ref={videoRef} onCanPlay={handleCanPlay} />
+                <canvas style={canvasRelative} ref={canvasRef} width="640"  height="480"  />
             </div>
-            <div>
-                <canvas
-                    
-                    ref={canvasRef}
-                    width="400"
-                    height="400"
-                />
-            </div>
-   
 
+            
+            
+           
         </div>
     )
 };

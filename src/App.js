@@ -8,7 +8,6 @@ function App() {
 
 
   const [window, setWindow] = useState("WIN");
-
   useEffect(() => localStorage.setItem('windowUSEEFECT', window), [
     window
   ]);
@@ -21,9 +20,11 @@ function App() {
     )
   }
 
+
+  
   return (
     <div>
-      <NewDiv sendOver={window} handleChangeWin={handleChangeWin}/>
+      {/* <NewDiv sendOver={window} handleChangeWin={handleChangeWin}/> */}
       <Camera />
     </div>
   )
