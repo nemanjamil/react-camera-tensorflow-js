@@ -24,19 +24,51 @@ const Camera =  (props) => {
     useEffect(() => {
      
         let m = 0;
-        async function getInfoFromMedia(model) {
+        async function getInfoFromMedia() {
+
+            
+
             
             m++
-            const imageDetection = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-            const detectionsForSize = faceapi.resizeResults(imageDetection, { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight })
-            const predictions = await model.detect(videoRef.current);
-            handleCapture(predictions)
+            const imageDetection = await faceapi.detectAllFaces(videoRef.current).withFaceLandmarks().withFaceDescriptors()
+            const fullFaceDescriptions  = faceapi.resizeResults(imageDetection, { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight })
+            
 
-            faceapi.draw.drawDetections(canvasRef.current, detectionsForSize)
+
+            let imgUrl = `/face/nemanja.jpg`
+            let img = await faceapi.fetchImage(imgUrl)
+            let detectOneFace = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
+           
+            const labeledDescriptors = [
+              new faceapi.LabeledFaceDescriptors(
+                'nemanja',
+                [detectOneFace[0].descriptor]
+              ),
+            ]
+
+            
+            if (fullFaceDescriptions.length) {
+              let faceMatcher = new faceapi.FaceMatcher(labeledDescriptors)
+
+              let resultsImageDetection = fullFaceDescriptions.map(fd => faceMatcher.findBestMatch(fd.descriptor))
+         
+              const context = canvasRef.current.getContext("2d");
+              context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
+              fullFaceDescriptions.forEach((res, i) => {
+                let box = res.detection.box
+                let bestMatch = resultsImageDetection[i]
+                const drawBox = new faceapi.draw.DrawBox(box, { label: bestMatch.toString() })
+                drawBox.draw(canvasRef.current)
+              })
+            }
+           
+            //const predictions = await model.detect(videoRef.current);
+            //handleCapture(predictions)            
 
             setTimeout(function(){ 
                 console.log(m);
-                getInfoFromMedia(model); 
+                getInfoFromMedia(); 
             }, 500);
 
             // requestAnimationFrame(() => {
@@ -53,13 +85,21 @@ const Camera =  (props) => {
         async function enableStream() {
             try {
                 setLoaded("Loading FaceApiModels")
-                await faceapi.loadTinyFaceDetectorModel('/models')
+               
+                await faceapi.loadSsdMobilenetv1Model('/models')
+                await faceapi.loadFaceLandmarkModel('/models')
+                await faceapi.loadFaceRecognitionModel('/models')
+
+                setLoaded("Loading All Models")
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
                 // await timeout(3000);
                 setMediaStream(stream);
-                setLoaded("Loading cocoSsd Models... it takes time")
-                const model = await cocoSsd.load();
-                await getInfoFromMedia(model)
+                //setLoaded("Loading cocoSsd Models... it takes time")
+                //const model = await cocoSsd.load();
+                setLoaded("Set Stream")
+                await timeout(1000);
+                setLoaded("Set TimeOut")
+                await getInfoFromMedia()
                 setLoaded(null)
 
             } catch(err) {
