@@ -7,4 +7,4 @@ Steps
 3. ### `yarn install`
 4. ### `yarn start`
 
-![Face Identification](public\imagesforreadme\imageFaceD.PNG)
+![Face Identification](public/imagesforreadme/imageFaceD.PNG)
