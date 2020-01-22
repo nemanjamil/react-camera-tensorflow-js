@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
+//import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import * as faceapi from 'face-api.js';
 
 
@@ -26,15 +26,10 @@ const Camera =  (props) => {
         let m = 0;
         async function getInfoFromMedia() {
 
-            
-
-            
             m++
             const imageDetection = await faceapi.detectAllFaces(videoRef.current).withFaceLandmarks().withFaceDescriptors()
             const fullFaceDescriptions  = faceapi.resizeResults(imageDetection, { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight })
-            
-
-
+  
             let imgUrl = `/face/nemanja.jpg`
             let img = await faceapi.fetchImage(imgUrl)
             let detectOneFace = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
@@ -45,7 +40,6 @@ const Camera =  (props) => {
                 [detectOneFace[0].descriptor]
               ),
             ]
-
             
             if (fullFaceDescriptions.length) {
               let faceMatcher = new faceapi.FaceMatcher(labeledDescriptors)
@@ -63,22 +57,22 @@ const Camera =  (props) => {
               })
             }
            
-            //const predictions = await model.detect(videoRef.current);
-            //handleCapture(predictions)            
+            // if you want to have object detection uncomment const model = await cocoSsd.load(); 
+            // onst predictions = await model.detect(videoRef.current);
+            // handleCapture(predictions)            
 
             setTimeout(function(){ 
                 console.log(m);
                 getInfoFromMedia(); 
             }, 500);
 
+            // instead of timeOut we can use  requestAnimationFrame
             // requestAnimationFrame(() => {
             //     console.log(m);
             //     getInfoFromMedia(model);
             //   });
-
         }
-        
-     
+             
         let stream = null;
         let constraints = { video: { width: 640, height: 480 }}
 
@@ -92,18 +86,21 @@ const Camera =  (props) => {
 
                 setLoaded("Loading All Models")
                 stream = await navigator.mediaDevices.getUserMedia(constraints);
-                // await timeout(3000);
+                                
+                setLoaded("Set Stream")
                 setMediaStream(stream);
+                
                 //setLoaded("Loading cocoSsd Models... it takes time")
                 //const model = await cocoSsd.load();
-                setLoaded("Set Stream")
+                
+                setLoaded("Wait a little bit")
                 await timeout(1000);
-                setLoaded("Set TimeOut")
+                
                 await getInfoFromMedia()
                 setLoaded(null)
 
             } catch(err) {
-              
+              console.log("eer", err);
             }
           }
 
@@ -118,7 +115,6 @@ const Camera =  (props) => {
           }
 
     },[mediaStream, setLoaded])
-
 
     function timeout(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -155,27 +151,20 @@ const Camera =  (props) => {
             context.fillText(prediction.class, x, y);
             context.fillText(prediction.score.toFixed(2), x, y + height - textHeight);
           });
-
-    
-        
-      } 
-   
+    }    
    
     if (mediaStream && videoRef.current && !videoRef.current.srcObject) {
         videoRef.current.srcObject = mediaStream;
     }
-
-    
     
     function handleCanPlay() {
         videoRef.current.play();
     }
 
-
-
     return (
         <div>
             <h1>Object and Face Recognition</h1>
+       
             {
               loaded ? (
                 <div>{loaded}</div>
@@ -184,15 +173,10 @@ const Camera =  (props) => {
               )
             }
            
-            
             <div style={container} >
                 <video ref={videoRef} onCanPlay={handleCanPlay} />
                 <canvas style={canvasRelative} ref={canvasRef} width="640"  height="480"  />
             </div>
-
-            
-            
-           
         </div>
     )
 };
