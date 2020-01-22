@@ -30,6 +30,7 @@ const Camera =  (props) => {
             const imageDetection = await faceapi.detectAllFaces(videoRef.current).withFaceLandmarks().withFaceDescriptors()
             const fullFaceDescriptions  = faceapi.resizeResults(imageDetection, { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight })
   
+            // !!! name of image in /public/face must be the same as imgUrl
             let imgUrl = `/face/nemanja.jpg`
             let img = await faceapi.fetchImage(imgUrl)
             let detectOneFace = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
