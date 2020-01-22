@@ -6,3 +6,5 @@ Steps
 2. Change in Camera.js on line 34 ( let imgUrl = `/face/nemanja.jpg`) for name of picture
 3. ### `yarn install`
 4. ### `yarn start`
+
+![alt test](screenshots/picturename)
